@@ -14,7 +14,7 @@ phases:
       - echo Entered the build phase...
       - echo Building the Docker image...
       - cd "$CODEBUILD_SRC_DIR"
-      - mvn clean install
+      - mvn clean install -Ddocker
       - docker tag spring-petclinic $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
   post_build:
     commands:
