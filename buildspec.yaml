@@ -5,6 +5,7 @@ phases:
     commands:
       - echo Installing app dependencies...
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 7) 
+      - REPOSITORY_URI = $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
   pre_build:
     commands:
       - echo Entered the pre_build phase...
@@ -16,10 +17,13 @@ phases:
       - echo Building the Docker image...
       - cd "$CODEBUILD_SRC_DIR"
       - mvn clean install -Ddocker
-      - docker tag spring-petclinic $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$COMMIT_HASH
+      - docker tag spring-petclinic $REPOSITORY_URI:$COMMIT_HASH
   post_build:
     commands:
       - echo Entered the post_build phase...
       - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - docker push $REPOSITORY_URI
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:$COMMIT_HASH"'@' deployment.yaml
+      - kubectl apply -f deployment.yaml
+
